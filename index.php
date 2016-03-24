@@ -1,7 +1,24 @@
 <?php
 
+$DATABASE = "";
+$TABLE = "";
+
 include("config.inc");
 include("html.php");
+
+// read DATABASE from POST or GET
+if ($_POST['database'] != "") {
+	$DATABASE = $_POST['database'];
+} else if ($_GET['database'] != "") {
+	$DATABASE = $_GET['database'];
+}
+
+// read TABLE from POST or GET
+if ($_POST['table'] != "") {
+	$TABLE = $_POST['table'];
+} else if ($_GET['table'] != "") {
+	$TABLE = $_GET['table'];
+}
 
 $db = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DATABASE);
 if ($db->connect_errno > 0) {
@@ -9,19 +26,23 @@ if ($db->connect_errno > 0) {
 }
 
 html_page_head("Database-Manager: $DATABASE @ $DB_HOST");
+html_sidebar_head();
 
-// read TABLE from POST or GET
-$TABLE = "";
-if ($_POST['table'] != "") {
-	$TABLE = $_POST['table'];
-} else if ($_GET['table'] != "") {
-	$TABLE = $_GET['table'];
+// read DATABASES from database
+$DATABASES = array();
+html_sidebar_sub_head("Databases", "", "fa-desktop", $TABLE == "");
+if ($result = $db->query("SHOW DATABASES;")) {
+	while ($row = $result->fetch_assoc()) {
+		$DATABASES[] = $row['Database'];
+		html_sidebar_entry(ucwords($row['Database'], "_ "), "?database=" . $row['Database'], "fa-desktop", $DATABASE == $row['Database']);
+	}
 }
+html_sidebar_sub_foot();
 
 // read TABLES from database
-html_sidebar_head();
 $TABLES = array();
 $TABLE_COLS = array();
+html_sidebar_sub_head("Tables", "", "fa-dashboard", $TABLE != "");
 if ($result = $db->query("SHOW TABLES;")) {
 	while ($row = $result->fetch_assoc()) {
 		$key = "Tables_in_" . $DATABASE;
@@ -29,7 +50,7 @@ if ($result = $db->query("SHOW TABLES;")) {
 		if ($TABLE == "") {
 			$TABLE = $row[$key];
 		}
-		html_sidebar_entry(ucwords($row[$key], "_ "), "?table=" . $row[$key], "fa-dashboard", $TABLE == $row[$key]);
+		html_sidebar_entry(ucwords($row[$key], "_ "), "?database=$DATABASE&table=" . $row[$key], "fa-dashboard", $TABLE == $row[$key]);
 		if ($result2 = $db->query("SHOW COLUMNS FROM " . $row[$key] . ";")) {
 			while ($row2 = $result2->fetch_assoc()) {
 				if (preg_match("/_id/", $row2['Field'])) {
@@ -39,6 +60,7 @@ if ($result = $db->query("SHOW TABLES;")) {
 		}
 	}
 }
+html_sidebar_sub_foot();
 html_sidebar_foot();
 
 // read COLS from database
@@ -200,7 +222,7 @@ if ($VALS['id'] != "") {
 	}
 	if ($result = $db->query($SQL)) {
 		html_panel_head(ucwords($TABLE, "_ ") . " (" . mysqli_num_rows($result) . ")");
-		echo "<A href=\"?table=$TABLE&ID=-1\">ADD</A><BR>";
+		echo "<A href=\"?database=$DATABASE&table=$TABLE&ID=-1\">ADD</A><BR>";
 		html_table_head();
 		$N = 0;
 		while ($row = $result->fetch_assoc()) {
@@ -230,7 +252,7 @@ if ($VALS['id'] != "") {
 			foreach ($row as $key => $value) {
 				if ($key == "id") {
 					$RID = $value;
-					echo "<TD><A href=\"?table=$TABLE&ID=$RID\">EDIT</A></TD>";
+					echo "<TD><A href=\"?database=$DATABASE&table=$TABLE&ID=$RID\">EDIT</A></TD>";
 				} else {
 					if (preg_match("/_id/", $key)) {
 						$LINK_TABLE = explode("_", $key)[0];
@@ -245,7 +267,7 @@ if ($VALS['id'] != "") {
 								}
 							}
 						}
-						echo "<TD><A href=\"?table=$LINK_TABLE&search_col=ID&search_str=$value\">$value2</A></TD>";
+						echo "<TD><A href=\"?database=$DATABASE&table=$LINK_TABLE&search_col=ID&search_str=$value\">$value2</A></TD>";
 					} else {
 						echo "<TD>$value</TD>";
 					}
@@ -259,7 +281,7 @@ if ($VALS['id'] != "") {
 						if ($result2 = $db->query("SELECT id FROM $LINK_TABLE WHERE $COL='$RID';")) {
 							$NUM = mysqli_num_rows($result2);
 						}
-						echo "<TD><A href=\"?table=$LINK_TABLE&search_col=$COL&search_str=$RID\">#$NUM</A></TD>";
+						echo "<TD><A href=\"?database=$DATABASE&table=$LINK_TABLE&search_col=$COL&search_str=$RID\">#$NUM</A></TD>";
 					}
 				}
 			}

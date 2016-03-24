@@ -39,10 +39,25 @@ function html_sidebar_head () {
 <?php
 }
 
+function html_sidebar_sub_head ($title = "title", $link = "#link", $icon = "fa-desktop", $active = false) {
+?>
+                    <li>
+                        <?php if ($active) {$in = "in"; $active = "active-menu-top";} else {$in = ""; $active = "";}; echo "<a class=\"$active\" href=\"$link\"><i class=\"fa $icon\"></i>$title<span class=\"fa arrow\"></span></a>\n"; ?>
+                         <ul class="nav nav-second-level <?php echo $in; ?>">
+<?php
+}
+
 function html_sidebar_entry ($title = "title", $link = "#link", $icon = "", $active = false) {
 ?>
                     <li>
-                        <?php if ($active) {$active = "active-menu";} else {$active = "";}; echo "<a class=\"$active\" href=\"$link\"><i class=\"fa $icon\"></i>$title</a>"; ?>
+                        <?php if ($active) {$active = "active-menu";} else {$active = "";}; echo "<a class=\"$active\" href=\"$link\"><i class=\"fa $icon\"></i>$title</a>\n"; ?>
+                    </li>
+<?php
+}
+
+function html_sidebar_sub_foot () {
+?>
+                        </ul>
                     </li>
 <?php
 }
